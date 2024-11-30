@@ -5,17 +5,32 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.view.SurfaceHolder;
 
+import java.util.List;
+
 public class GameThread extends Thread {
 
     private SurfaceHolder surfaceHolder;
     private boolean isRunning;
 
-    public GameThread(SurfaceHolder surfaceHolder) {
+    private PlayerCycle playerCycle;
+
+    public int surfaceHeight;
+    public int surfaceWidth;
+
+    public GameThread(SurfaceHolder surfaceHolder, PlayerCycle playerCycle) {
+
         this.surfaceHolder = surfaceHolder;
+        this.playerCycle = playerCycle;
     }
 
     public void setRunning(boolean isRunning) {
+
         this.isRunning = isRunning;
+    }
+
+    public void setSurfaceDimensions(int width, int height) {
+        this.surfaceHeight = height;
+        this.surfaceWidth = width;
     }
 
     @Override
@@ -26,9 +41,13 @@ public class GameThread extends Thread {
                 canvas = surfaceHolder.lockCanvas();
                 if (canvas != null) {
                     synchronized (surfaceHolder) {
+                        updateGame();
                         drawGame(canvas);
                     }
                 }
+            }
+            catch (Exception e){
+                e.printStackTrace();
             } finally {
                 if (canvas != null) {
                     surfaceHolder.unlockCanvasAndPost(canvas);
@@ -37,27 +56,53 @@ public class GameThread extends Thread {
         }
     }
 
-    private void drawGame(Canvas canvas) {
-        canvas.drawColor(Color.BLACK);
-        Paint gridPaint = new Paint();
-        gridPaint.setColor(Color.GRAY);
-        gridPaint.setStrokeWidth(2);
+    private void updateGame() {
+        playerCycle.move();
 
-        int cellSize = 50;
-        for (int x = 0; x < canvas.getWidth(); x += cellSize) {
-            canvas.drawLine(x, 0 , x, canvas.getHeight(), gridPaint);
+        if (playerCycle.getX() < 0 || playerCycle.getX() >= surfaceWidth ||
+                playerCycle.getY() < 0 || playerCycle.getY() >= surfaceHeight) {
+            isRunning = false;
         }
-        for (int y = 0; y <canvas.getHeight(); y += cellSize){
-            canvas.drawLine(0, y, canvas.getWidth(), y, gridPaint);
-        }
-
-        Paint cyclePaint = new Paint();
-        cyclePaint.setColor(Color.BLUE);
-        canvas.drawRect(100,100,150,150,cyclePaint);
-
-        Paint trailPaint = new Paint();
-        trailPaint.setColor(Color.CYAN);
-        trailPaint.setStrokeWidth(5);
-        canvas.drawLine(100,125,200,125,trailPaint);
     }
+
+    private void drawGame(Canvas canvas) {
+        canvas.drawColor(0xFF000000);
+        drawGrid(canvas);
+        drawPlayerCycle(canvas);
+        drawTrail(canvas, playerCycle.getTrail());
+    }
+
+
+    private void drawGrid(Canvas canvas){
+        int cellSize = 50;
+        Paint gridPaint = new Paint();
+        gridPaint.setColor(0xFF444444);
+
+        for (int x = 0; x < surfaceWidth; x += cellSize){
+            canvas.drawLine(x, 0, x, surfaceHeight, gridPaint); //vertical lines
+        }
+        for (int y = 0; y < surfaceHeight; y += cellSize){
+            canvas.drawLine(0, y, surfaceHeight, y, gridPaint); //horizontal lines
+        }
+    }
+
+    private void drawPlayerCycle(Canvas canvas) {
+        Paint cyclePaint = new Paint();
+        cyclePaint.setColor(0xFF00FF00);
+
+        float cycleSize = 30;
+        canvas.drawRect(playerCycle.getX() - cycleSize / 2, playerCycle.getY() - cycleSize /2,
+                playerCycle.getX() + cycleSize / 2, playerCycle.getY() + cycleSize / 2, cyclePaint);
+    }
+
+    private void drawTrail(Canvas canvas, List<Segment> trail){
+        Paint trialPaint = new Paint();
+        trialPaint.setColor(0xFF00FFFF);
+        trialPaint.setStrokeWidth(5);
+
+        for (Segment segment : trail) {
+            canvas.drawLine(segment.startX, segment.startY, segment.endX, segment.endY,trialPaint);
+        }
+    }
+
 }

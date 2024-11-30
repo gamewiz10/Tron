@@ -13,26 +13,32 @@ public class GameActivity extends Activity implements SurfaceHolder.Callback {
 
     private SurfaceView gameSurfaceView;
     private GameThread gameThread;
+    private PlayerCycle playerCycle;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.game_activity);
+        setContentView(R.layout.activity_game);
 
         gameSurfaceView = findViewById(R.id.gameSurfaceView);
         SurfaceHolder holder = gameSurfaceView.getHolder();
         holder.addCallback(this);
+
+        playerCycle = new PlayerCycle(100, 100);
     }
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
-        gameThread = new GameThread(holder);
+        gameThread = new GameThread(holder, playerCycle);
+        gameThread.setSurfaceDimensions(gameSurfaceView.getWidth(), gameSurfaceView.getHeight());
         gameThread.setRunning(true);
         gameThread.start();
     }
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
-
+        if (gameThread != null){
+            gameThread.setSurfaceDimensions(width, height);
+        }
     }
 
     @Override
@@ -55,9 +61,14 @@ public class GameActivity extends Activity implements SurfaceHolder.Callback {
             case MotionEvent.ACTION_DOWN:
                 float touchX = event.getX();
 
-                if(touchX > getWidth() / 2) {
+                if(touchX > gameSurfaceView.getWidth() / 2) {
                     playerCycle.turnRight();
+                } else {
+                    playerCycle.turnLeft();
                 }
+                return true;
+            default:
+                return super.onTouchEvent(event);
         }
     }
 }
