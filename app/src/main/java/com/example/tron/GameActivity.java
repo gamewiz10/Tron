@@ -14,6 +14,7 @@ public class GameActivity extends Activity implements SurfaceHolder.Callback {
     private SurfaceView gameSurfaceView;
     private GameThread gameThread;
     private PlayerCycle playerCycle;
+    private SurfaceHolder surfaceHolder;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,7 +29,7 @@ public class GameActivity extends Activity implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
-        gameThread = new GameThread(holder, playerCycle);
+        gameThread = new GameThread(holder, playerCycle, this);
         gameThread.setSurfaceDimensions(gameSurfaceView.getWidth(), gameSurfaceView.getHeight());
         gameThread.setRunning(true);
         gameThread.start();
@@ -70,5 +71,24 @@ public class GameActivity extends Activity implements SurfaceHolder.Callback {
             default:
                 return super.onTouchEvent(event);
         }
+    }
+
+    public void showGameOverScreen() {
+        setContentView(R.layout.activity_game_over);
+        findViewById(R.id.newGameButton).setOnClickListener(v -> {
+            restartGame();
+        });
+    }
+
+    private void restartGame() {
+        setContentView(R.layout.activity_game);
+        surfaceHolder = gameSurfaceView.getHolder();
+        surfaceHolder.addCallback(this);
+
+        playerCycle = new PlayerCycle(100, 100);
+        gameThread = new GameThread(surfaceHolder, playerCycle, this);
+        gameThread.setSurfaceDimensions(gameSurfaceView.getWidth(), gameSurfaceView.getHeight());
+        gameThread.setRunning(true);
+        gameThread.start();
     }
 }

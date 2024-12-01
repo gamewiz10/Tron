@@ -13,14 +13,16 @@ public class GameThread extends Thread {
     private boolean isRunning;
 
     private PlayerCycle playerCycle;
+    private GameActivity gameActivity;
 
     public int surfaceHeight;
     public int surfaceWidth;
 
-    public GameThread(SurfaceHolder surfaceHolder, PlayerCycle playerCycle) {
+    public GameThread(SurfaceHolder surfaceHolder, PlayerCycle playerCycle, GameActivity gameActivity) {
 
         this.surfaceHolder = surfaceHolder;
         this.playerCycle = playerCycle;
+        this.gameActivity = gameActivity;
     }
 
     public void setRunning(boolean isRunning) {
@@ -63,6 +65,18 @@ public class GameThread extends Thread {
                 playerCycle.getY() < 0 || playerCycle.getY() >= surfaceHeight) {
             isRunning = false;
         }
+
+        // TODO: add more logic for collisions and npcs
+    }
+
+    private void triggerGameOver() {
+        isRunning = false;
+        gameActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                gameActivity.showGameOverScreen();
+            }
+        });
     }
 
     private void drawGame(Canvas canvas) {
